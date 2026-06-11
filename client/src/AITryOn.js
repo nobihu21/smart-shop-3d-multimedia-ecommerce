@@ -153,6 +153,8 @@ export default function AITryOn() {
   const [status, setStatus] = useState("Camera ready ho rahi hai...");
   const [tracking, setTracking] = useState("Waiting");
   const [camError, setCamError] = useState(false);
+  const [analysis, setAnalysis] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
 
   const updateTracking = useCallback((msg) => {
     if (trackingRef.current !== msg) {
@@ -516,6 +518,36 @@ export default function AITryOn() {
       ? "Palm aur wrist dono camera mein lao. Watch wrist point ke thora upar draw hogi."
       : "Pants ke liye hips, knees aur ankles frame mein lao. Sirf face/upper body se pants draw nahi hongi.";
 
+  async function analyzeFit() {
+    setAnalyzing(true);
+    setAnalysis("");
+
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: selectedProduct.id,
+          productName: selectedProduct.name,
+          productType,
+          tracking,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Analysis failed");
+      }
+
+      setAnalysis(data.message);
+    } catch (err) {
+      setAnalysis(`Analysis unavailable: ${err.message || "try again"}`);
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
   return (
     <main className="tryon-page">
       <section className="tryon-shell">
@@ -585,6 +617,11 @@ export default function AITryOn() {
                 <span>{typeLabel[productType]}</span>
               </div>
             </div>
+
+            <button className="primary-btn analyze-btn" onClick={analyzeFit} disabled={analyzing}>
+              {analyzing ? "Analyzing..." : "Analyze fit"}
+            </button>
+            {analysis ? <p className="analysis-result">{analysis}</p> : null}
 
             <div className="tryon-product-list">
               {ALL_PRODUCTS.map((product) => (
