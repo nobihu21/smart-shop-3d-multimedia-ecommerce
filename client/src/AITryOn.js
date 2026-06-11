@@ -183,13 +183,14 @@ export default function AITryOn() {
 
   useEffect(() => {
     mountedRef.current = true;
+    const webcam = webcamRef.current;
 
     return () => {
       mountedRef.current = false;
 
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
 
-      const videoEl = webcamRef.current?.video;
+      const videoEl = webcam?.video;
       if (videoEl?.srcObject) {
         videoEl.srcObject.getTracks().forEach((t) => t.stop());
       }
